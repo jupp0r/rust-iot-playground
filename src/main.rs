@@ -1,6 +1,7 @@
 use std::cmp;
-use std::rc::Rc;
+use std::collections::HashMap;
 use std::fmt;
+use std::rc::Rc;
 
 #[derive(Debug, Default)]
 struct Stereo {
@@ -66,23 +67,52 @@ impl RemoteControllable for HotTub {
 
 #[derive(Debug, Default)]
 struct RemoteControl {
-    devices: Vec<Rc<dyn RemoteControllable>>,
+    devices: HashMap<String, Rc<dyn RemoteControllable>>,
 }
 
 impl RemoteControl {
-    fn add_device<T: RemoteControllable + 'static>(&mut self, device: Rc<T>) {
-        self.devices.push(device);
+    pub fn add_device<T: RemoteControllable + 'static>(&mut self, id: &str, device: Rc<T>) {
+        self.devices.insert(id.into(), device);
+    }
+
+    pub fn turn_on(&mut self, id: &str) {
+        if let Some(ref mut device) = self.devices.get_mut(id.into()) {
+            if let Some(ref mut d) = Rc::get_mut(device) {
+                d.on_button_pressed();
+            }
+        }
+    }
+
+    pub fn turn_off(&mut self, id: &str) {
+        if let Some(ref mut device) = self.devices.get_mut(id.into()) {
+            if let Some(ref mut d) = Rc::get_mut(device) {
+                d.off_button_pressed();
+            }
+        }
     }
 }
 
 fn main() {
     println!("Hello, world!");
-    let hot_tub = Rc::new(HotTub::default());
-    let sound_blaster = Rc::new(Stereo::default());
+}
 
-    let mut control = RemoteControl::default();
-    control.add_device(hot_tub.clone());
-    control.add_device(sound_blaster.clone());
+#[cfg(test)]
+mod test {
+    use super::*;
 
-    dbg!(control);
+    #[test]
+    fn test_remote() {
+        let hot_tub = Rc::new(HotTub::default());
+        let sound_blaster = Rc::new(Stereo::default());
+        let mut control = RemoteControl::default();
+        control.add_device("hot_tub", hot_tub.clone());
+        control.add_device("sound_blaster", sound_blaster.clone());
+
+        control.turn_on("hot_tub");
+        control.turn_on("sound_blaster");
+
+        assert_eq!(hot_tub.bubbles_on, true);
+        assert_eq!(hot_tub.heat_on, true);
+        assert_eq!(sound_blaster.volume, 1);
+    }
 }

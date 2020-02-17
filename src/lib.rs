@@ -76,21 +76,23 @@ impl<'a> RemoteControl<'a> {
 
     pub fn turn_on(&mut self, id: &str) {
         if let Some(ref mut device) = self.devices.get_mut(id) {
-            println!("found device");
             device.on_button_pressed();
-        } else {
-            println!("didn't find device");
         }
     }
 
     pub fn turn_off(&mut self, id: &str) {
         if let Some(ref mut device) = self.devices.get_mut(id) {
-            println!("found device");
             device.off_button_pressed();
-        } else {
-            println!("didn't find device");
         }
     }
+    pub fn on<T: RemoteControllable + 'static>(device: &'a mut T) {
+        device.on_button_pressed();
+    }
+
+    pub fn off<T: RemoteControllable + 'static>(device: &'a mut T) {
+        device.off_button_pressed();
+    }
+
 }
 
 #[cfg(test)]
@@ -101,8 +103,8 @@ mod test {
     fn test_remote() {
         let mut hot_tub = HotTub::default();
         let mut sound_blaster = Stereo::default();
-        let mut control = RemoteControl::default();
 
+        let mut control = RemoteControl::default();
         control.add_device("hot_tub", &mut hot_tub);
         control.add_device("sound_blaster", &mut sound_blaster);
         control.turn_on("hot_tub");
@@ -111,5 +113,12 @@ mod test {
         assert_eq!(hot_tub.bubbles_on, true);
         assert_eq!(hot_tub.heat_on, true);
         assert_eq!(sound_blaster.volume, 1);
+
+        RemoteControl::off(&mut hot_tub);
+        assert_eq!(hot_tub.bubbles_on, false);
+
+        RemoteControl::on(&mut hot_tub);
+        assert_eq!(hot_tub.bubbles_on, true);
+
     }
 }

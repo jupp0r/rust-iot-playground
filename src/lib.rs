@@ -1,7 +1,6 @@
 use std::cmp;
 use std::collections::HashMap;
 use std::fmt;
-use std::rc::Rc;
 
 #[derive(Debug, Default)]
 struct Stereo {
@@ -66,28 +65,30 @@ impl RemoteControllable for HotTub {
 }
 
 #[derive(Debug, Default)]
-struct RemoteControl {
-    devices: HashMap<String, Rc<dyn RemoteControllable>>,
+struct RemoteControl<'a> {
+    devices: HashMap<&'static str, &'a mut dyn RemoteControllable>,
 }
 
-impl RemoteControl {
-    pub fn add_device<T: RemoteControllable + 'static>(&mut self, id: &str, device: Rc<T>) {
-        self.devices.insert(id.into(), device);
+impl<'a> RemoteControl<'a> {
+    pub fn add_device<T: RemoteControllable + 'static>(&mut self, id: &'static str, device: &'a mut T) {
+        self.devices.insert(id, device);
     }
 
     pub fn turn_on(&mut self, id: &str) {
-        if let Some(ref mut device) = self.devices.get_mut(id.into()) {
-            if let Some(ref mut d) = Rc::get_mut(device) {
-                d.on_button_pressed();
-            }
+        if let Some(ref mut device) = self.devices.get_mut(id) {
+            println!("found device");
+            device.on_button_pressed();
+        } else {
+            println!("didn't find device");
         }
     }
 
     pub fn turn_off(&mut self, id: &str) {
-        if let Some(ref mut device) = self.devices.get_mut(id.into()) {
-            if let Some(ref mut d) = Rc::get_mut(device) {
-                d.off_button_pressed();
-            }
+        if let Some(ref mut device) = self.devices.get_mut(id) {
+            println!("found device");
+            device.off_button_pressed();
+        } else {
+            println!("didn't find device");
         }
     }
 }
@@ -102,12 +103,12 @@ mod test {
 
     #[test]
     fn test_remote() {
-        let hot_tub = Rc::new(HotTub::default());
-        let sound_blaster = Rc::new(Stereo::default());
+        let mut hot_tub = HotTub::default();
+        let mut sound_blaster = Stereo::default();
         let mut control = RemoteControl::default();
-        control.add_device("hot_tub", hot_tub.clone());
-        control.add_device("sound_blaster", sound_blaster.clone());
 
+        control.add_device("hot_tub", &mut hot_tub);
+        control.add_device("sound_blaster", &mut sound_blaster);
         control.turn_on("hot_tub");
         control.turn_on("sound_blaster");
 

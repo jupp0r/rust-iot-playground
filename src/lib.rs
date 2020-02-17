@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 #[derive(Debug, Default)]
-struct Stereo {
+pub struct Stereo {
     volume: u16,
 }
 
@@ -17,7 +17,7 @@ impl Stereo {
 }
 
 #[derive(Debug, Default)]
-struct HotTub {
+pub struct HotTub {
     bubbles_on: bool,
     heat_on: bool,
 }
@@ -37,7 +37,7 @@ impl HotTub {
     }
 }
 
-trait RemoteControllable: fmt::Debug {
+pub trait RemoteControllable: fmt::Debug {
     fn on_button_pressed(&mut self);
     fn off_button_pressed(&mut self);
 }
@@ -65,7 +65,7 @@ impl RemoteControllable for HotTub {
 }
 
 #[derive(Debug, Default)]
-struct RemoteControl<'a> {
+pub struct RemoteControl<'a> {
     devices: HashMap<&'static str, &'a mut dyn RemoteControllable>,
 }
 
@@ -91,10 +91,6 @@ impl<'a> RemoteControl<'a> {
             println!("didn't find device");
         }
     }
-}
-
-fn main() {
-    println!("Hello, world!");
 }
 
 #[cfg(test)]

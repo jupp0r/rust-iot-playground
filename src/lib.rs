@@ -1,6 +1,4 @@
-use std::cmp;
-use std::collections::HashMap;
-use std::fmt;
+use std::{cmp, fmt};
 
 #[derive(Debug, Default)]
 pub struct Stereo {
@@ -65,31 +63,14 @@ impl RemoteControllable for HotTub {
 }
 
 #[derive(Debug, Default)]
-pub struct RemoteControl<'a> {
-    devices: HashMap<&'static str, &'a mut dyn RemoteControllable>,
-}
+pub struct RemoteControl; 
 
-impl<'a> RemoteControl<'a> {
-    pub fn add_device<T: RemoteControllable + 'static>(&mut self, id: &'static str, device: &'a mut T) {
-        self.devices.insert(id, device);
-    }
-
-    pub fn turn_on(&mut self, id: &str) {
-        if let Some(ref mut device) = self.devices.get_mut(id) {
-            device.on_button_pressed();
-        }
-    }
-
-    pub fn turn_off(&mut self, id: &str) {
-        if let Some(ref mut device) = self.devices.get_mut(id) {
-            device.off_button_pressed();
-        }
-    }
-    pub fn on<T: RemoteControllable + 'static>(device: &'a mut T) {
+impl RemoteControl {
+    pub fn on<T: RemoteControllable + 'static>(device: &mut T) {
         device.on_button_pressed();
     }
 
-    pub fn off<T: RemoteControllable + 'static>(device: &'a mut T) {
+    pub fn off<T: RemoteControllable + 'static>(device: &mut T) {
         device.off_button_pressed();
     }
 
@@ -104,11 +85,8 @@ mod test {
         let mut hot_tub = HotTub::default();
         let mut sound_blaster = Stereo::default();
 
-        let mut control = RemoteControl::default();
-        control.add_device("hot_tub", &mut hot_tub);
-        control.add_device("sound_blaster", &mut sound_blaster);
-        control.turn_on("hot_tub");
-        control.turn_on("sound_blaster");
+        RemoteControl::on(&mut hot_tub);
+        RemoteControl::on(&mut sound_blaster);
 
         assert_eq!(hot_tub.bubbles_on, true);
         assert_eq!(hot_tub.heat_on, true);
